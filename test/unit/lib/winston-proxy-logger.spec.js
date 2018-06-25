@@ -77,7 +77,7 @@ describe('Unit Test - WinstonProxyLogger', function () {
       });
     }); // End of When instantiate
 
-    describe("When getRootTarget", function () {
+    describe("#getRootTarget", function () {
       it("Given target nil Then must return undefined", function () {
         const instance = WinstonProxyLogger();
         expect(instance.getRootTarget()).toBeUndefined();
@@ -104,9 +104,9 @@ describe('Unit Test - WinstonProxyLogger', function () {
         expect(instance.getRootTarget()).toEqual(fakeTarget);
         expect(targetObject.getRootTarget).toHaveBeenCalled();
       });
-    }); // End of When getRootTarget
+    }); // #getRootTarget
 
-    describe("When isDebugEnabled", function () {
+    describe("#isDebugEnabled", function () {
       it("Then must call getRootTarget", function () {
         const instance = WinstonProxyLogger();
         instance.getRootTarget = jasmine.createSpy("getRootTarget");
@@ -131,9 +131,9 @@ describe('Unit Test - WinstonProxyLogger', function () {
         });
         expect(instance.isDebugEnabled()).toBeTruthy();
       });
-    });
+    }); // #isDebugEnabled
 
-    describe("When generatePrefixLog", function () {
+    describe("#generatePrefixLog", function () {
       it("Given undefined Then must return undefined", function () {
         const instance = WinstonProxyLogger();
         expect(instance.generatePrefixLog()).toBeUndefined();
@@ -156,9 +156,9 @@ describe('Unit Test - WinstonProxyLogger', function () {
         ];
         expect(instance.generatePrefixLog(prefixes)).toEqual("[a][b][c]");
       });
-    });
+    }); // #generatePrefixLog
 
-    describe("When property target", function () {
+    describe("#target", function () {
       it("Given target undefined When get Then must return undefined", function () {
         const instance = WinstonProxyLogger();
         instance.properties.target = undefined;
@@ -201,9 +201,20 @@ describe('Unit Test - WinstonProxyLogger', function () {
         };
         expect(instance.properties.target).toBe(expectedValue);
       });
-    });
+    }); // #target
 
-    describe("When log", function () {
+    describe("#log", function () {
+      it("Given no target Then must do nothing", function () {
+        const instance = WinstonProxyLogger();
+        const getRootTarget = jasmine.createSpy("getRootTarget");
+        const generateMetaData = jasmine.createSpy("generateMetaData");
+        instance.getRootTarget = getRootTarget;
+        instance.generateMetaData = generateMetaData;
+        instance.log('debug');
+        expect(getRootTarget).toHaveBeenCalled();
+        expect(generateMetaData).not.toHaveBeenCalled();
+      });
+
       it("Given not string level name Then must do nothing", function () {
         const instance = WinstonProxyLogger();
         const getRootTarget = jasmine.createSpy("getRootTarget");
@@ -224,9 +235,28 @@ describe('Unit Test - WinstonProxyLogger', function () {
           return targetMock;
         });
 
+        spyOn(instance, 'generateMetaData');
+
         instance.log("az");
         expect(instance.getRootTarget).toHaveBeenCalled();
         expect(targetMock.log).toHaveBeenCalledWith("az");
+        expect(instance.generateMetaData).toHaveBeenCalled();
+      });
+
+      it("Given target with log function Then must not call it", function () {
+        const instance = WinstonProxyLogger();
+        const targetMock = {
+          log: {}
+        };
+        instance.getRootTarget = jasmine.createSpy("getRootTarget").and.callFake(function () {
+          return targetMock;
+        });
+
+        spyOn(instance, 'generateMetaData');
+
+        instance.log("az");
+        expect(instance.getRootTarget).toHaveBeenCalled();
+        expect(instance.generateMetaData).toHaveBeenCalled();
       });
 
       it("Given target level not exists but log function do with prefixes Then must call log function with valid arguments", function () {
@@ -246,7 +276,7 @@ describe('Unit Test - WinstonProxyLogger', function () {
         const expectedMetaData = {
           a: 45
         };
-        instance.generateMetaData = jasmine.createSpy("generateMetaData").and.callFake(() => expectedMetaData);
+        spyOn(instance, 'generateMetaData').and.callFake(() => expectedMetaData);
 
         instance.log("debug", "az");
         instance.log("debug", "[az]");
@@ -270,12 +300,15 @@ describe('Unit Test - WinstonProxyLogger', function () {
           return targetMock;
         });
 
+        spyOn(instance, 'generateMetaData');
+
         instance.log("debug", "az");
         instance.log("debug", "[az]");
         expect(instance.getRootTarget).toHaveBeenCalled();
         expect(targetMock.log).not.toHaveBeenCalled();
         expect(targetMock.debug).toHaveBeenCalledWith("[ab][cd] az");
         expect(targetMock.debug).toHaveBeenCalledWith("[ab][cd][az]");
+        expect(instance.generateMetaData).toHaveBeenCalled();
       });
 
       it('Given meta data as first Then must add it to the end', function () {
@@ -380,9 +413,9 @@ describe('Unit Test - WinstonProxyLogger', function () {
         });
         expect(instance.generateMetaData).toHaveBeenCalledTimes(1);
       });
-    }); // End of When log
+    }); // #log
 
-    describe("When of", function () {
+    describe("#of", function () {
       it("Given no argument Then must create new proxy logger", function () {
         const firstProxy = new WinstonProxyLogger();
         const proxyFromOfFunction = firstProxy.of();
@@ -554,9 +587,9 @@ describe('Unit Test - WinstonProxyLogger', function () {
           expect(proxyFromOfFunction.properties.metaData).toEqual(expectedMetaData);
         });
       }); // End of #of(Options)
-    }); // End of When of
+    }); // #of
 
-    describe("When defineLogLevel", function () {
+    describe("#defineLogLevel", function () {
       it("Given valid name and not exist Then must define log function", function () {
         expect(WinstonProxyLogger.prototype.testMe).not.toBeDefined();
         WinstonProxyLogger.defineLogLevel("testMe");
@@ -579,9 +612,9 @@ describe('Unit Test - WinstonProxyLogger', function () {
         });
         instance.testMe("a");
       });
-    }); // End of defineLogLevel
+    }); // #defineLogLevel
 
-    describe("When defineLogLevelAlias", function () {
+    describe("#defineLogLevelAlias", function () {
       it("Given valid name and not exist Then must define log function", function () {
         expect(WinstonProxyLogger.prototype.testMe).not.toBeDefined();
         WinstonProxyLogger.defineLogLevelAlias("debug", "testMe");
@@ -604,9 +637,9 @@ describe('Unit Test - WinstonProxyLogger', function () {
         });
         instance.testMe("a");
       });
-    }); // End of When defineLogLevelAlias
+    }); // #defineLogLevelAlias
 
-    describe("When defineSysLogLevels", function () {
+    describe("#defineSysLogLevels", function () {
       it("Then must define sys log levels", function () {
         WinstonProxyLogger.defineSysLogLevels();
         _.each(['emerg', 'alert', 'crit', 'error', 'warning', 'notice', 'info', 'debug', 'warn', 'silly'], function (levelName) {
@@ -614,12 +647,26 @@ describe('Unit Test - WinstonProxyLogger', function () {
           expect(WinstonProxyLogger.levelNamesKnown[levelName]).toBeTruthy();
         });
       });
-    }); // End of defineSysLogLevels
+    }); // #defineSysLogLevels
 
     describe("#generateMetaData", function () {
       it("Given no metaData Then must return undefined", function () {
         const instance = new WinstonProxyLogger();
         expect(instance.generateMetaData()).not.toBeDefined();
+      });
+
+      it('Given parent as proxy Then must call parent', function () {
+        const instance = new WinstonProxyLogger();
+
+        instance.properties.target = new WinstonProxyLogger();
+        spyOn(instance.properties.target, 'generateMetaData').and.returnValue({
+          a: 12
+        });
+
+        expect(instance.generateMetaData()).toEqual({
+          a: 12
+        });
+        expect(instance.properties.target.generateMetaData).toHaveBeenCalledTimes(1);
       });
 
       it("Given metadata as function Then must call it and return result", function () {
@@ -628,14 +675,12 @@ describe('Unit Test - WinstonProxyLogger', function () {
           a: 12
         };
         instance.properties.metaData = jasmine.createSpy("metaData").and.callFake(() => expectedResult);
-        expect(instance.generateMetaData()).toBe(expectedResult);
+        expect(instance.generateMetaData()).toEqual(expectedResult);
       });
 
       it("Given metadata as function that failed Then must call it and return error", function () {
         const instance = new WinstonProxyLogger();
-        const expectedResult = {
-          a: 12
-        };
+
         instance.properties.metaData = jasmine.createSpy("metaData").and.throwError("The error");
         expect(instance.generateMetaData()).toEqual({
           asymmetricMatch: function (val) {
@@ -659,7 +704,7 @@ describe('Unit Test - WinstonProxyLogger', function () {
           a: 12
         };
         instance.properties.metaData = expectedResult;
-        expect(instance.generateMetaData()).toBe(expectedResult);
+        expect(instance.generateMetaData()).toEqual(expectedResult);
       });
 
       it("Given metadata as string|number|boolean Then must return it", function () {
@@ -682,7 +727,7 @@ describe('Unit Test - WinstonProxyLogger', function () {
         instance.properties.metaData = true;
         expect(instance.generateMetaData()).toEqual(expectedResult);
       });
-    }); // End of #generateMetaData
+    }); // #generateMetaData
 
     describe("#tryMergeMetaData", function () {
       const tryMergeMetaData = WinstonProxyLogger.prototype.tryMergeMetaData;
@@ -741,6 +786,6 @@ describe('Unit Test - WinstonProxyLogger', function () {
           });
         }
       });
-    });
+    }); // #tryMergeMetaData
   });
 });
